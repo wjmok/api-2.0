@@ -28,9 +28,13 @@ class User extends Model{
             array_push($user_no,$value['user_no']);
         };
 
+        
+
         $info = resDeal((new UserInfo())->where('user_no','in',$user_no)->select()->toArray());
         $address = resDeal((new UserAddress())->where('user_no','in',$user_no)->select()->toArray());
         $info = changeIndexArray('user_no',$info);
+
+
 
         foreach ($data as $key => $value) {
 
@@ -40,11 +44,14 @@ class User extends Model{
                 $data[$key]['address'] = [];
             };
 
+
             if(isset($address[$value['user_no']])){
                 $data[$key]['address'] = $address[$value['user_no']];
             }else{
                 $data[$key]['address'] = [];
             };
+
+
         };
         
         
