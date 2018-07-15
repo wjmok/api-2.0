@@ -21,7 +21,7 @@ class Main extends BaseController{
 
      //主方法
     public static function Base(){
-        $data = Request::instance()->param();
+        $data = trim(Request::instance()->param());
         $url  = "app\api\service\base\\".$data['serviceName'];
         $service = new $url($data);
         return $service::$data['serviceFuncName']($data);

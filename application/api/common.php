@@ -74,6 +74,22 @@ function curl_get($url, &$httpCode = 0)
     return $file_contents;
 }
 
+
+//xml格式转化成数组
+function xml2array($xml){
+    $p=xml_parser_create();
+    xml_parse_into_struct($p, $xml, $vals, $index);
+    xml_parser_free($p);
+    $data = "";
+    foreach($index as $key=>$value){
+        if($key=='xml'||$key =='XML') continue;
+        $tag=$vals[$value[0]]['tag'];
+        $value=$vals[$value[0]]['value'];
+        $data[$tag]=$value;
+    }
+    return $data;
+}
+
 //获取随机数
 function getRandChar($length){
     $str=null;
@@ -210,34 +226,46 @@ function createSMSCode($length){
  * @param string $pid parent标记字段
  * @return array
  */
-function clist_to_tree($list, $pk='id', $pid = 'parentid', $child = 'child', $root = 0)
+function clist_to_tree($list, $pk='id', $pid = 'parentid', $child = 'child', $root = '')
 {
     // 创建Tree
     $tree = array();
-    if($list[0]&&isset($list[0][$pid])){
-        if(is_array($list)) {
+    if(is_array($list)&&$list[0]&&isset($list[0][$pid])){
+        
         // 创建基于主键的数组引用
-            $refer = array();
-            foreach ($list as $key => $data) {
-                $refer[$data[$pk]] =& $list[$key];
-            }
-            foreach ($list as $key => $data) {
-                // 判断是否存在parent
-                
-                
-                $parentId =  $data[$pid];
+        $refer = array();
+        foreach ($list as $key => $data) {
+            $refer[$data[$pk]] =& $list[$key];
+        };
+        foreach ($list as $key => $data) {
+            // 判断是否存在parent
+            
+            
+            $parentId =  $data[$pid];
+            if(!empty($root)){
                 if ($root == $parentId) {
                     $tree[] =& $list[$key];
                 }else{
                     if (isset($refer[$parentId])) {
                         $parent =& $refer[$parentId];
                         $parent[$child][] =& $list[$key];
-                    }
+                    };
                 }
+            }else{
+
+                if (isset($refer[$parentId])) {
+                    $parent =& $refer[$parentId];
+                    $parent[$child][] =& $list[$key];
+                }else{
+                    $tree[] =& $list[$key];
+                };
                 
-                
-            }
-        }
+            };
+            
+            
+            
+        };
+        
     }else{
         $tree = $list;
     };
@@ -344,9 +372,9 @@ function objectToArray ($object) {
 function preGet($data){
     
 
-    
+    $data = preSearch($data);
 
-    if(!isset($data['status'])){
+    if(!isset($data['map']['status'])){
         $data['map']['status'] = 1;
     };
 
@@ -372,9 +400,14 @@ function preAdd($data){
         $data['data']['thirdapp_id'] = Cache::get($data['token'])['thirdapp_id'];
     };
 
+
+    if(!isset($data['data']['user_no'])){
+        $data['data']['user_no'] = Cache::get($data['token'])['user_no'];
+    };
+
     
     
-    $data['data']['user_no'] = Cache::get($data['token'])['user_no'];
+    
 
     $data = jsonDeal($data);
 
@@ -404,19 +437,23 @@ function jsonDeal($data){
 }
 
 
-function resDeal($data,$arr)
+function resDeal($data)
 {   
+    $filterArr = ['bannerImg','mainImg','passage_array','express','pay','child_array','snap_product','pay','snap_address','wx_prepay_info'];
     
-    if(isset($data['data'])){
+    
+    if(isset($data['data'])&&!empty($data['data']&&is_array($data['data']))){
         $dealData = $data['data'];
-    }else{
+    }else if(!empty($data)&&is_array($data)){
         $dealData = $data;
-    }
+    }else{
+        return $data;
+    };
 
-    foreach ($dealData as $key => $value) {
+    foreach ($data as $key => $value) {
 
         foreach ( $dealData[$key] as $child_key => $child_value) {
-           if(in_array($child_key,$arr)){
+           if(in_array($child_key,$filterArr)){
             
             $dealData[$key][$child_key] = json_decode($child_value,true);
            }
@@ -470,6 +507,9 @@ function preModelStr($data){
     if(isset($data['map'])){
         $str = $str."where(\$data[\"map\"])->";
     };
+    if(isset($data['mapOr'])){
+        $str = $str."whereOr(\$data[\"mapOr\"])->";
+    };
     if(isset($data['order'])){
         $str = $str."order(\$data[\"order\"])->";
     };
@@ -478,6 +518,7 @@ function preModelStr($data){
 
 //分页/筛选数据
 function after($data,$arr){
+
     $arr = ['img','mainImg','bannerImg','headImg','child_array'];
    
     foreach ($data as $key => $value) {
@@ -500,8 +541,8 @@ function chargeBlank($arr,$data){
     };
 
     $data = jsonDeal($data);
-    
     return $data;
+
 }
 
 
@@ -595,9 +636,7 @@ function chargeBlank($arr,$data){
             }
             
         }else{
-
             $data['map']['thirdapp_id'] = Cache::get($data['token'])['thirdapp_id'];
-
         };
 
 
@@ -612,6 +651,7 @@ function chargeBlank($arr,$data){
                 $data['map']['user_no'] = Cache::get($data['token'])['user_no'];
             };
             if(isset($data['map']['thirdapp_id'])&&$data['map']['thirdapp_id'] != Cache::get($data['token'])['thirdapp_id']){
+
                 throw new ErrorMessage([
                     'msg'=>'项目权限不符',
                 ]); 
@@ -676,58 +716,37 @@ function chargeBlank($arr,$data){
 
 
 
-
     function preSearch($data){
     
 
-        $data['map'] = [];
+        
+        
 
         if(isset($data['searchItem'])){
-
+            $data['map'] = [];
             $data['map'] = array_merge($data['map'],objectToArray($data['searchItem']));
             unset($data['searchItem']);
         }
 
-        if(isset($data['searchItemByIn'])){
-            foreach ($data['searchItemByIn'] as $key => $value) {
-                $data['searchItemByIn'][$key] = ['in', $value];
-            };
-            $data['map'] = array_merge($data['map'],objectToArray($data['searchItemByIn']));
-            unset($data['searchItemByIn']);
+        if(isset($data['searchItemOr'])){
+            $data['mapOr'] = [];
+            $data['mapOr'] = array_merge($data['mapOr'],objectToArray($data['searchItemOr']));
+            unset($data['searchItemOr']);
         }
 
-        if(isset($data['searchItemByLike'])){
-            foreach ($data['searchItemByLike'] as $key => $value) {
-                $data['searchItemByLike'][$key] = ['like', $value];
-            };
-            $data['map'] = array_merge($data['map'],objectToArray($data['searchItemByLike']));
-            unset($data['searchItemByLike']);
-        }
-
-        if(isset($data['searchItemByGt'])){
-            foreach ($data['searchItemByGt'] as $key => $value) {
-                $data['searchItemByGt'][$key] = ['gt', $value];
-            };
-
-            $data['map'] = array_merge($data['map'],objectToArray($data['searchItemByGt']));
-            unset($data['searchItemByGt']);
-        }
-
-        if(isset($data['searchItemByLt'])){
-            foreach ($data['searchItemByLt'] as $key => $value) {
-                $data['searchItemByLt'][$key] = ['lt', $value];
-            };
-            $data['map'] = array_merge($data['map'],objectToArray($data['searchItemByLt']));
-            unset($data['searchItemByLt']);
-        }
-        if(isset($data['searchItemByBetween'])){
-            foreach ($data['searchItemByBetween'] as $key => $value) {
-                $data['searchItemByBetween'][$key] = ['between', $value];
-            };
-            $data['map'] = array_merge($data['map'],objectToArray($data['searchItemByBetween']));
-            unset($data['searchItemByBetween']);
-        }
+        
 
         return $data;
 
+    }
+
+
+    function changeIndexArray($indexName,$data){
+        $newArray = array();
+        foreach ($data as $key => $value) {
+            if(isset($value[$indexName])){
+                $newArray[$value[$indexName]] = $value;
+            };
+        };
+        return $newArray;
     }

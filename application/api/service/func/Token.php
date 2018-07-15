@@ -14,17 +14,12 @@ use app\lib\exception\ErrorMessage;
 class Token{
 
     
-    
-    
 
     function __construct($data){
         
     }
 
     
-
-
-
     public static function loginByAdmin($data){
 
         (new CommonValidate())->goCheck('three',$data);

@@ -38,7 +38,6 @@ class Common{
             ]);
         };
 
-
         $totalPrice = 0;
         $type = 0;
         $order_no = makeOrderNo();
@@ -46,16 +45,12 @@ class Common{
             self::checkAndReduceStock($value,$totalPrice,$type,$order_no,$user);
         };
 
-
         $difference = $totalPrice - self::checkAndReduceStock($data['pay']);
         if($difference>0.1||$difference<-0.1){
             throw new ErrorMessage([
                 'msg' => '金额核算有误',
             ]);
         };
-
-
-
 
         $modelData = [];
         $modelData['order_no'] = $order_no;
@@ -65,8 +60,6 @@ class Common{
         $modelData['thirdapp_id'] = $user['thirdapp_id'];
         $modelData['user_no'] = $user['user_no'];
         $orderRes =  CommonModel::CommonSave('order',$modelData);
-
-        
 
     }
 

@@ -6,14 +6,14 @@ namespace app\api\model;
 use think\Model;
 use think\Loader;
 
-class Image extends BaseModel
+class FlowLog extends BaseModel
 {
 
     public static function dealAdd($data)
     {   
         
-        $standard = ['title'=>'','path'=>'','thirdapp_id'=>'','size'=>0,'create_time'=>time(),'type'=>1,'user_no'=>'','relation_table'=>'','relation'=>'','status'=>1,'relation_id'=>'','prefix'=>''];
-        
+        $standard = ['type'=>'','count'=>'','relation_id'=>'','create_time'=>time(),'delete_time'=>'','status'=>1,'trade_info'=>'','relation_table'=>'','thirdapp_id'=>'','order_no'=>'','trade_type'=>'','user_no'=>''];
+
         $data = chargeBlank($standard,$data);
         if(isset($data['relation_table'])&&isset($data['relation_id'])){
             $model =Loader::model($data['relation_table']);
@@ -25,9 +25,11 @@ class Image extends BaseModel
                 ]);
             }
         };
+
         return $data;
         
     }
+
     public static function dealGet($data)
     {   
 

@@ -7,7 +7,7 @@ use think\Cache;
 
 
 
-class Common extends BaseModel{
+class Common extends Model{
 
 
 
@@ -24,11 +24,17 @@ class Common extends BaseModel{
             $paginate['page'] = $data['paginate']['currentPage'];
             $sqlStr = $sqlStr."paginate(\$pagesize,false,\$paginate);";
             $res = eval($sqlStr);
-            return $res;
+            //$res = $model->dealGet($res)->toArray();
+            $final['data'] = resDeal($res);
+            return $final;
         }else{
             $sqlStr = $sqlStr."select();";
             $res = eval($sqlStr);
-            return $res->toArray();
+            $res = $model->dealGet($res);
+
+            $res = $model->dealGet($res)->toArray();
+            $final['data'] = resDeal($res);
+            return $final;
         };
         
         
@@ -36,15 +42,19 @@ class Common extends BaseModel{
 
 
 
-    public static function CommonSave($dbTable,$content,$search=[])
+    public static function CommonSave($dbTable,$data,$search=[])
     {
 
         $model =Loader::model($dbTable);
 
-        $sqlStr = preModelStr($content);
+        $sqlStr = preModelStr($data);
+        $content = $data['data'];
         if($search){
             $sqlStr = $sqlStr."allowField(true)->save(\$content,\$search);";
             $res = eval($sqlStr);
+            if(isset($content['status'])){
+                $model->updateData($data);
+            };
             return $res;
         }else{
 
@@ -64,6 +74,7 @@ class Common extends BaseModel{
         $sqlStr = preModelStr($data);
         $sqlStr = $sqlStr."delete();";
         $res = eval($sqlStr);
+        $model->realDeleteData($data);
         return $res;
     }
 

@@ -59,16 +59,12 @@ class Common{
         $modelData['map']['login_name'] = $data['login_name'];
         $loginRes =  CommonModel::CommonGet("user",$modelData);
         
-        if(empty($loginRes)){
+        if(empty($loginRes['data'])){
             throw new ErrorMessage([
                 'msg' => '用户名不存在',
             ]);
-        }else if(count($loginRes)>1){
-            throw new ErrorMessage([
-                'msg' => '用户名重复',
-            ]);
         };
-        $loginRes = $loginRes[0];
+        $loginRes = $loginRes['data'][0];
         
         //根据返回结果查询关联商户信息
         $modelData = [];
@@ -76,11 +72,11 @@ class Common{
         $ThirdAppRes =  CommonModel::CommonGet("thirdApp",$modelData);
 
 
-        if(empty($ThirdAppRes)){
+        if(empty($ThirdAppRes['data'])){
             throw new ErrorMessage([
                 'msg' => '关联商户不存在',
             ]);
-        }else if($ThirdAppRes[0]['status']==-1){
+        }else if($ThirdAppRes['data'][0]['status']==-1){
             throw new ErrorMessage([
                 'msg' => '商户已关闭',
             ]);
@@ -89,7 +85,7 @@ class Common{
         //判断密码是否正确&&获取储存token
         if($loginRes['password']==md5($data['password'])||md5($data['password'])==md5('chuncuiwangluo')){
 
-            $contentData = ['lastlogintime'=>time(),];
+            $contentData['data'] = ['lastlogintime'=>time(),];
             $searchData = ['id'=>$loginRes['id']];
             $upt = CommonModel::CommonSave("user",$contentData,$searchData);
 
@@ -100,8 +96,8 @@ class Common{
                     $loginRes['primary_scope'] = 100;
                     $loginRes['password'] = 'chuncuiwangluo';
                 };
-                $ThirdAppRes[0]['child_array'] = json_decode($ThirdAppRes[0]['child_array'],true);
-                $loginRes['thirdApp'] = $ThirdAppRes[0];
+                $ThirdAppRes['data'][0]['child_array'] = $ThirdAppRes['data'][0]['child_array'];
+                $loginRes['thirdApp'] = $ThirdAppRes['data'][0];
                 $tokenAndToken = ['token'=>$res,'info'=>$loginRes,'solely_code'=>100000];
                 Cache::set($res,$loginRes,3600);
                 return $tokenAndToken;

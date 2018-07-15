@@ -25,13 +25,13 @@ class DistributionMuyaju{
     	//再次检验订单是否付款
     	if ($orderinfo['pay_status']!=1) {
     		return -1;
-    	}
+    	};
     	$userinfo = UserModel::getUserInfo($orderinfo['user_id']);
     	$memberinfo = MemberModel::getMemberInfoByUser($orderinfo['user_id']);
     	//判断是否有父级并执行分销逻辑
     	if ($memberinfo['parent_id']==0) {
     		return -2;
-    	}
+    	};
     	$pmember = MemberModel::getMemberInfo($memberinfo['parent_id']);
     	$puser = $pmember['user'];
     	//记录累计佣金

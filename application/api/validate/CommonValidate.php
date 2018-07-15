@@ -11,6 +11,7 @@ class CommonValidate extends BaseValidate{
         'id'=>'require|isNotEmpty|number',
         'password'=>'require|isNotEmpty',
         'token'=>'require|isNotEmpty',
+        'order_no'=>'require|isNotEmpty',
         'thirdapp_id'=>'require|isNotEmpty|isPositiveInteger',
         
     ];
@@ -22,6 +23,7 @@ class CommonValidate extends BaseValidate{
         'three'  =>  ['login_name','password'], 
         'four'  =>  ['login_name','password','token'],
         'five'  =>  ['name','token'],
+        'six'  =>  ['order_no','token'],
         
     ];
 

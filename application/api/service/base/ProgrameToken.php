@@ -13,11 +13,20 @@ use think\Exception;
 use think\Model;
 
 
+
+
+
+
 /**
  * 微信登录
  * 如果担心频繁被恶意调用，请限制ip
  * 以及访问频率
  */
+
+
+
+
+
 
 class ProgrameToken {
     protected $code;
@@ -92,8 +101,7 @@ class ProgrameToken {
     // 只能延迟自有token的过期时间超过7200秒（目前还无法确定，在express_in时间到期后
     // 还能否进行微信支付
     // 没有刷新令牌会有一个问题，就是用户的操作有可能会被突然中断
-    private function grantToken($wxResult)
-    {
+    private function grantToken($wxResult){
         // 此处生成令牌使用的是TP5自带的令牌
         // 如果想要更加安全可以考虑自己生成更复杂的令牌
         // 比如使用JWT并加入盐，如果不加入盐有一定的几率伪造令牌
@@ -167,10 +175,10 @@ class ProgrameToken {
             ]);
         };
 
+
         $modelData = [];
         $modelData['map']['user_no'] = $userNo;
         $userInfo=CommonModel::CommonGet('user_info',$modelData);
-
 
 
         throw new SuccessMessage([
@@ -179,7 +187,15 @@ class ProgrameToken {
             'info'=>$userInfo
         ]);
 
+
+
     };
+
+
+
+
+
+
 
 
 }

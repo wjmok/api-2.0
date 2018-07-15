@@ -325,6 +325,7 @@ abstract class Builder
         // 检测操作符
         if (!in_array($exp, $this->exp)) {
             $exp = strtolower($exp);
+            $exp =trim($exp);
             if (isset($this->exp[$exp])) {
                 $exp = $this->exp[$exp];
             } else {

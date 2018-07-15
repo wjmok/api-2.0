@@ -7,12 +7,37 @@ use think\Cache;
 class ThirdApp extends BaseModel{
     
 
-    public static function dealBlank($data)
+    public static function dealAdd($data)
     {   
-        $standard = ['appid','appsecret','app_description','name','codeName','distribution','distributionRule','custom_rule','phone','headImg','smsKey_ali','smsSecret_ali','smsID_tencet','smsKey_tencet','scope','scope_description','app_type','mchid','wxkey','wx_token','wxgh_id','wx_appid','wx_appsecret','encodingaeskey','access_token','access_token_expire','aestype','picstandard','picstorage','create_time','update_time','delete_time','invalid_time','view_count','status'];
+
+        $standard = ['appid'=>'','appsecret'=>'','app_description'=>'','name'=>'','codeName'=>'','distribution'=>'','distributionRule'=>'','custom_rule'=>'','phone'=>'','mainImg'=>[],'smsKey_ali'=>'','smsSecret_ali'=>'','smsID_tencet'=>'','smsKey_tencet'=>'','scope'=>'','scope_description'=>'','app_type'=>'','mchid'=>'','wxkey'=>'','wx_token'=>'','wxgh_id'=>'','wx_appid'=>'','wx_appsecret'=>'','encodingaeskey'=>'','access_token'=>'','access_token_expire'=>'','aestype'=>'','picstandard'=>'','picstorage'=>'','create_time'=>time(),'update_time'=>'','delete_time'=>'','invalid_time'=>'','view_count'=>'','status'=>'','child_array'=>[],'user_no'=>''];
 
         return chargeBlank($standard,$data);
+
+
     }
+
+     public static function dealGet($data)
+    {   
+
+        return $data;
+        
+    }
+
+    public static function dealUpdate($data)
+    {   
+
+        return $data;
+        
+    }
+
+    public static function dealRealDelete($data)
+    {   
+
+        return $data;
+        
+    }
+
 
 
 

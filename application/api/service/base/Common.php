@@ -16,7 +16,7 @@ class Common{
 
     
     
-    private static $filterArr = ['bannerImg','mainImg','passage_array','express','pay','child_array'];
+    
 
     function __construct($data){
         
@@ -26,15 +26,16 @@ class Common{
     //添加admin时判断name是否重复
     
     public static function add($data,$inner=false){
+
+
         $data = preSearch($data);
-        $scopeArr = ['order'=>5,'label'=>20,'article'=>20,'product'=>20];
+        $scopeArr = ['order'=>['scope'=>[20,90],'isMe'=>['user_type'=>[1,2],'scope'=>[0,20]]],'label'=>['scope'=>[20,90]],'article'=>['scope'=>[20,90]],'product'=>['scope'=>[20,90]]];
         if(isset($scope[$data['modelName']])){
             $scope = $scope[$data['modelName']];
             (new CommonValidate())->goCheck('two',$data);
             $data = checkTokenAndScope($data,$scope);
         };
 
-        
 
         $data = preAdd($data);
         $res =  CommonModel::CommonSave($data['modelName'],$data['data']);
@@ -59,7 +60,9 @@ class Common{
 
 
     public static function get($data,$inner=false){
-        $data = preSearch($data);
+
+        
+        
         $scopeArr = ['order'=>5,];
         if(isset($scope[$data['modelName']])){
             $scope = $scope[$data['modelName']];
@@ -69,14 +72,15 @@ class Common{
 
         
         $data = preGet($data);
-        $res =  CommonModel::CommonGet($data['modelName'],$data);
-        if(!is_array($res)){
-            $res = $res->toArray();
-        };
         
-        $res = resDeal($res,self::$filterArr);
+        $res =  CommonModel::CommonGet($data['modelName'],$data);
+        
+        return $res;
+        
         if(isset($res['data'])&&count($res['data'])>0){
+
             $res['data'] = clist_to_tree($res['data']);
+
         }else if(!isset($res['data'])&&count($res)>0){
             $res = clist_to_tree($res);
         }else{
@@ -100,6 +104,7 @@ class Common{
     }
 
     public static function update($data,$key='更新',$inner=false){
+
         $data = preSearch($data);
 
         $scopeArr = ['order'=>5,'label'=>20,'article'=>20,'product'=>20];
@@ -109,9 +114,6 @@ class Common{
             $data = checkTokenAndScope($data,$scope);
         };
 
-
-
-       
         $revise = CommonModel::CommonGet($data['modelName'],$data['map']);
         
         if($revise){
