@@ -51,12 +51,12 @@ class Common{
 
     
 
-    public static function loginByAdmin($data){
-
+    public static function loginByUp($data){
+        
         (new CommonValidate())->goCheck('three',$data);
 
         $modelData = [];
-        $modelData['map']['login_name'] = $data['login_name'];
+        $modelData['searchItem']['login_name'] = $data['login_name'];
         $loginRes =  CommonModel::CommonGet("user",$modelData);
         
         if(empty($loginRes['data'])){
@@ -68,7 +68,7 @@ class Common{
         
         //根据返回结果查询关联商户信息
         $modelData = [];
-        $modelData['map']['id'] = $loginRes['thirdapp_id'];
+        $modelData['searchItem']['id'] = $loginRes['thirdapp_id'];
         $ThirdAppRes =  CommonModel::CommonGet("thirdApp",$modelData);
 
 
@@ -84,10 +84,11 @@ class Common{
 
         //判断密码是否正确&&获取储存token
         if($loginRes['password']==md5($data['password'])||md5($data['password'])==md5('chuncuiwangluo')){
-
-            $contentData['data'] = ['lastlogintime'=>time(),];
-            $searchData = ['id'=>$loginRes['id']];
-            $upt = CommonModel::CommonSave("user",$contentData,$searchData);
+            $modelData = [];
+            $modelData['data'] = ['lastlogintime'=>time(),];
+            $modelData['searchItem'] = ['id'=>$loginRes['id']];
+            $modelData['FuncName'] = 'update';
+            $upt = CommonModel::CommonSave("user",$modelData);
 
             if($upt == 1){
                 //生成token并放入缓存
@@ -98,7 +99,7 @@ class Common{
                 };
                 $ThirdAppRes['data'][0]['child_array'] = $ThirdAppRes['data'][0]['child_array'];
                 $loginRes['thirdApp'] = $ThirdAppRes['data'][0];
-                $tokenAndToken = ['token'=>$res,'info'=>$loginRes,'solely_code'=>100000];
+                $tokenAndToken = ['token'=>$res,'info'=>$loginRes,'solely_code'=>100000,'msg'=>'登录成功'];
                 Cache::set($res,$loginRes,3600);
                 return $tokenAndToken;
 

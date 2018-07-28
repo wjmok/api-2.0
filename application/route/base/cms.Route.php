@@ -6,12 +6,12 @@ Route::post('api/:version/token/app', 'api/:version.base.Token/getAppToken');
 
 
 //image
-Route::post('api/:version/Base/:serviceName/:serviceFuncName', 'api/:version.base.Main/Base');
+Route::post('api/:version/Base/:serviceName/:FuncName', 'api/:version.base.Main/Base');
 
-Route::post('api/:version/Func/:serviceName/:serviceFuncName', 'api/:version.base.Main/Func');
+Route::post('api/:version/Func/:serviceName/:FuncName', 'api/:version.base.Main/Func');
 
 
-Route::post('api/:version/Common/:modelName/:FuncName', 'api/:version.base.Main/Common');
+Route::any('api/:version/Common/:modelName/:FuncName', 'api/:version.base.Main/Common');
 
 
 

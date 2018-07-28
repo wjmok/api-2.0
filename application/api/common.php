@@ -7,6 +7,7 @@
  */
 use think\Cache;
 use app\lib\exception\TokenException;
+use app\api\model\User;
 
 use app\lib\exception\SuccessMessage;
 use app\lib\exception\ErrorMessage;
@@ -354,6 +355,25 @@ function makeUserNo()
     return $userSn;
 }
 
+function makeProductNo($category)
+{
+    
+    $productNo ='P'.substr(time(), -5).substr(microtime(), 2, 5).rand(0, 99).$category;
+
+    return $productNo;
+}
+
+function generateSpuNo($product,$sku_array){
+        
+        
+    $sku_array = json_decode($sku_array,true);
+    $no = 'P'.substr(time(), -5).rand(0, 99).$product['id'];
+    foreach ($sku_array as $key => $value) {
+        $no .= $value;
+    };
+    return $no;
+}
+
 
 function objectToArray ($object) {  
     if(!is_object($object) && !is_array($object)) {  
@@ -368,20 +388,7 @@ function objectToArray ($object) {
 
 
 
-//分页/筛选数据
-function preGet($data){
-    
 
-    $data = preSearch($data);
-
-    if(!isset($data['map']['status'])){
-        $data['map']['status'] = 1;
-    };
-
-    return $data;
-
-
-}
 
 
 
@@ -390,36 +397,43 @@ function preGet($data){
 function preAdd($data){
     
     
-    if(isset($data['password'])){
-        $data['password'] = md5($data['password']);
+    if(isset($data['data']['password'])){
+        $data['data']['password'] = md5($data['data']['password']);
     };
-    
-        
-    
     if(!isset($data['data']['thirdapp_id'])){
         $data['data']['thirdapp_id'] = Cache::get($data['token'])['thirdapp_id'];
     };
-
-
     if(!isset($data['data']['user_no'])){
         $data['data']['user_no'] = Cache::get($data['token'])['user_no'];
     };
 
-    
-    
-    
-
-    $data = jsonDeal($data);
+    $data['data'] = keepNum($data['data']);
+    $data['data'] = jsonDeal($data['data']);
 
     return $data;
 
+
+
 }
 
+
 //分页/筛选数据
-function preUpdate($data){
-    unset($data['data']['user_no']);
-    unset($data['data']['id']);
-    $data = jsonDeal($data);
+function keepNum($data){
+
+    $filterArr = ['child_array','sku_array','sku_item','spu_array','spu_item'];
+    foreach ($data as $key => $value) {
+        if(in_array($key,$filterArr)){
+            if(is_array($value)){
+                foreach ($value as $v_key => $v_value) {
+                    $value[$v_key] = floatval($v_value);
+                };
+                $data[$key] = $value;
+            }else{
+                $data[$key] = floatval($value); 
+            };
+        };
+    };
+
     return $data;
 }
 
@@ -439,7 +453,7 @@ function jsonDeal($data){
 
 function resDeal($data)
 {   
-    $filterArr = ['bannerImg','mainImg','passage_array','express','pay','child_array','snap_product','pay','snap_address','wx_prepay_info'];
+    $filterArr = ['bannerImg','mainImg','passage_array','express','pay','child_array','snap_product','pay','snap_address','wx_prepay_info','sku_array','sku_item','spu_array','spu_item'];
     
     
     if(isset($data['data'])&&!empty($data['data']&&is_array($data['data']))){
@@ -449,15 +463,32 @@ function resDeal($data)
     }else{
         return $data;
     };
+    
+    foreach ($dealData as $key => $value) {
+        
+        if(is_object($dealData[$key])){
+            $dealData[$key] = $dealData[$key]->toArray();
+            foreach ($dealData[$key] as $child_key => $child_value) {
 
-    foreach ($data as $key => $value) {
-
-        foreach ( $dealData[$key] as $child_key => $child_value) {
-           if(in_array($child_key,$filterArr)){
-            
-            $dealData[$key][$child_key] = json_decode($child_value,true);
-           }
+               if(in_array($child_key,$filterArr)){
+                if(!is_array($child_value)){
+                    $dealData[$key][$child_key] = json_decode($child_value,true);  
+                };
+               };
+            };
         };
+        if(is_array($dealData[$key])){
+           
+            foreach ($dealData[$key] as $child_key => $child_value) {
+
+               if(in_array($child_key,$filterArr)){
+                if(!is_array($child_value)){
+                    $dealData[$key][$child_key] = json_decode($child_value,true);  
+                };
+               };
+            };
+        };
+        
         
     };
 
@@ -480,19 +511,15 @@ function dealUpdateRes($res,$name){
     
 
 
-    if($res>0){
+    if($res==1){
         throw new SuccessMessage([
             'msg'=>$name.'成功'
-        ]);
-    }else if($res==0){
-        throw new ErrorMessage([
-            'msg'=>'重复'.$name
         ]);
     }else{
         throw new ErrorMessage([
             'msg'=>$name.'失败'
         ]);
-    }
+    };
 
     
 
@@ -504,15 +531,15 @@ function dealUpdateRes($res,$name){
 function preModelStr($data){
     
     $str = "return \$model->";
-    if(isset($data['map'])){
-        $str = $str."where(\$data[\"map\"])->";
+    if(isset($data['searchItem'])){
+        $str = $str."where(\$data[\"searchItem\"])->";
     };
-    if(isset($data['mapOr'])){
-        $str = $str."whereOr(\$data[\"mapOr\"])->";
+    if(isset($data['searchItemOr'])){
+        $str = $str."whereOr(\$data[\"searchItemOr\"])->";
     };
     if(isset($data['order'])){
         $str = $str."order(\$data[\"order\"])->";
-    };
+    }
     return $str;
 }
 
@@ -533,7 +560,7 @@ function after($data,$arr){
 
 //分页/筛选数据
 function chargeBlank($arr,$data){
-  
+    
     foreach ($arr as $key => $value) {
        if(!isset($data[$key])){
         $data[$key]=$value;
@@ -601,7 +628,7 @@ function chargeBlank($arr,$data){
         
     }
 
-    function checkTokenAndScope ($data,$scope=0)
+    function checkTokenAndScope ($data,$scope=[])
     {
         
         
@@ -612,20 +639,38 @@ function chargeBlank($arr,$data){
                 'solelyCode' => 200000
             ]);
 
-        }else if(Cache::get($data['token'])['primary_scope']<$scope){
-            
-            throw new ErrorMessage([
-                'msg'=>'权限不足',
-            ]);
-
         };
 
-        if(isset($data['map']['thirdapp_id'])){
-            
-            
-            if(Cache::get($data['token'])['thirdapp_id'] != $data['map']['thirdapp_id']||!in_array($data['map']['thirdapp_id'],Cache::get($data['token'])['thirdApp']['child_array'])){
+        if(empty($scope)){
+           return $data; 
+        };
 
-                if(Cache::get($data['token'])['primary_scope']<60){
+
+        $thirdapp_id = Cache::get($data['token'])['thirdapp_id'];
+        $primary_scope = Cache::get($data['token'])['primary_scope'];
+        $user_no = Cache::get($data['token'])['user_no'];
+        $user_type = Cache::get($data['token'])['type'];
+
+
+        if(isset($data['searchItem']['thirdapp_id'])){
+            if($thirdapp_id != $data['searchItem']['thirdapp_id']||!in_array($data['searchItem']['thirdapp_id'],Cache::get($data['token'])['thirdApp']['child_array'])){
+                if($primary_scope<60){
+
+                   throw new ErrorMessage([
+                        'msg'=>'项目权限不符',
+                    ]); 
+                }
+            }
+            
+        }else{
+            $data['searchItem']['thirdapp_id'] = $thirdapp_id;
+        };
+
+        if($data['FuncName']=='add'&&isset($data['data']['thirdapp_id'])){
+            
+            if($thirdapp_id != $data['data']['thirdapp_id']||!in_array($data['data']['thirdapp_id'],Cache::get($data['token'])['thirdApp']['child_array'])){
+
+                if($primary_scope<60){
 
                    throw new ErrorMessage([
                         'msg'=>'项目权限不符',
@@ -635,69 +680,98 @@ function chargeBlank($arr,$data){
                 
             }
             
+        }else if($data['FuncName']=='add'&&!isset($data['data']['thirdapp_id'])){
+            $data['data']['thirdapp_id'] = $thirdapp_id;
+        };
+        
+
+
+
+        $pass = false;
+        foreach ($scope as $key => $value) {
+            if($user_type==$key){
+                
+                foreach ($value as $c_key => $c_value) {
+
+                    if($primary_scope<$c_key[1]&&$primary_scope>=$c_key[0]){
+                        $pass = true;
+                        $check_no = '';
+                        $check_type = $user_type;
+                        if(isset($data['data']['user_no'])&&isset($data['searchItem']['user_no'])){
+                            throw new ErrorMessage([
+                                'msg'=>'不允许更新user_no',
+                            ]);
+                        };
+
+                        if(isset($data['data']['user_no'])){
+                            $check_no = $data['data']['user_no'];
+                        };
+
+                        if(isset($data['searchItem']['user_no'])){
+                            $check_no = $data['searchItem']['user_no'];
+                        };
+
+                        if($check_no){
+                            $model = new User();
+                            $map['user_no'] = $check_no;
+                            $checkUserInfo = $model->where($map)->find(); 
+                            if($checkUserInfo){
+                                $check_type = $checkUserInfo['type'];
+                            }else{
+                                throw new ErrorMessage([
+                                    'msg'=>'传递的user_no有误',
+                                ]);
+                            };
+                        };
+
+                        foreach ($c_value as $cc_key => $cc_value) {
+                            if(in_array($check_type,$cc_key)){
+                                if($cc_value=='isMe'){
+                                    $data['searchItem']['user_no'] = $user_no;
+                                    if(isset($data['data'])){
+                                        $data['data']['user_no'] = $user_no;
+                                    };
+                                };
+
+                                if($cc_value=='canChild'){
+
+                                    if($checkUserInfo){
+                                        if($checkUserInfo['user_no']!=$user_no&&$checkUserInfo['parent_no']!=$user_no){
+
+                                            throw new ErrorMessage([
+                                                'msg'=>'权限不符',
+                                            ]);
+
+                                        };
+                                    }else{
+                                        $data['searchItem']['user_no'] = $user_no;
+                                        if(isset($data['data'])){
+                                            $data['data']['user_no'] = $user_no;
+                                        };
+                                    };
+                                    
+                                };
+                            };
+                        };
+                        
+
+                    };
+
+                };
+                
+            };
+
+
+        };
+        
+        if(!$pass){
+            throw new ErrorMessage([
+                'msg'=>'权限不足',
+            ]);
         }else{
-            $data['map']['thirdapp_id'] = Cache::get($data['token'])['thirdapp_id'];
+            return $data;
         };
-
-
-        if(Cache::get($data['token'])['primary_scope']<30){
-
-            if(isset($data['map']['user_no'])&&$data['map']['user_no'] != Cache::get($data['token'])['user_no']){
-                throw new ErrorMessage([
-                    'msg'=>'项目权限不符',
-                ]); 
-
-            }else{
-                $data['map']['user_no'] = Cache::get($data['token'])['user_no'];
-            };
-            if(isset($data['map']['thirdapp_id'])&&$data['map']['thirdapp_id'] != Cache::get($data['token'])['thirdapp_id']){
-
-                throw new ErrorMessage([
-                    'msg'=>'项目权限不符',
-                ]); 
-
-            }else{
-                $data['map']['thirdapp_id'] = Cache::get($data['token'])['thirdapp_id'];
-            };
-            
-
-
-
-        }else if(Cache::get($data['token'])['primary_scope']<90){
-
-            if(isset($data['map']['thirdapp_id'])){
-            
-            
-                if(Cache::get($data['token'])['thirdapp_id'] != $data['map']['thirdapp_id']&&!in_array($data['map']['thirdapp_id'],Cache::get($data['token'])['thirdApp']['child_array'])){
-
-                    
-
-                    throw new ErrorMessage([
-                        'msg'=>'项目权限不符',
-                    ]); 
-
-                    
-                }
-                
-            }else{
-
-                $data['map']['thirdapp_id'] = Cache::get($data['token'])['thirdapp_id'];
-
-            }; 
-
-            if(isset($data['data']['thirdapp_id'])){
-            
-                if(Cache::get($data['token'])['thirdapp_id'] != $data['data']['thirdapp_id']&&!in_array($data['data']['thirdapp_id'],Cache::get($data['token'])['thirdApp']['child_array'])){
-                    throw new ErrorMessage([
-                        'msg'=>'项目权限不符',
-                    ]); 
-                }
-                
-            };
-
-        };
-
-        return $data;
+    
 
         
         
@@ -750,3 +824,20 @@ function chargeBlank($arr,$data){
         };
         return $newArray;
     }
+
+
+    function changeIndexArrayUnion($indexName,$data){
+        $newArray = array();
+        foreach ($data as $key => $value) {
+            if(isset($value[$indexName])&&isset($newArray[$value[$indexName]])){
+                $newArray[$value[$indexName]][$value['id']] = $value;
+            }else if(isset($value[$indexName])&&!isset($newArray[$value[$indexName]])){
+                $newArray[$value[$indexName]] = [];
+                $newArray[$value[$indexName]][$value['id']] = $value;
+            };
+        };
+        return $newArray;
+    }
+
+
+    

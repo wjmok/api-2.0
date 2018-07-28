@@ -29,19 +29,44 @@ class Common{
 
 
         $data = preSearch($data);
-        $scopeArr = ['order'=>['scope'=>[20,90],'isMe'=>['user_type'=>[1,2],'scope'=>[0,20]]],'label'=>['scope'=>[20,90]],'article'=>['scope'=>[20,90]],'product'=>['scope'=>[20,90]]];
-        if(isset($scope[$data['modelName']])){
-            $scope = $scope[$data['modelName']];
-            (new CommonValidate())->goCheck('two',$data);
-            $data = checkTokenAndScope($data,$scope);
+
+        $scopeArr = [
+            'Order'=>config('scope.one'),
+            'Label'=>config('scope.one'),
+            'Article'=>config('scope.one'),
+            'Product'=>config('scope.one'),
+            'Sku'=>config('scope.one'),
+            'Message'=>config('scope.two'),
+            'UserInfo'=>config('scope.two'),
+            'UserAddress'=>config('scope.two'),
+            'FlowLog'=>config('scope.two'),
+        ];
+
+        if(isset($scopeArr[$data['modelName']])){
+
+            if($scopeArr[$data['modelName']]['mustToken']){
+                $scope = $scopeArr[$data['modelName']];
+                (new CommonValidate())->goCheck('one',$data);
+                $data = checkTokenAndScope($data,$scope);
+            };
+            
+        }else{
+
+            throw new ErrorMessage([
+                'msg'=>'接口调用错误'
+            ]);
+
         };
+        
 
-
+        
         $data = preAdd($data);
-        $res =  CommonModel::CommonSave($data['modelName'],$data['data']);
+        $res =  CommonModel::CommonSave($data['modelName'],$data);
+        
         if($inner){
             return $res;
         }else{
+
             if($res>0){
                 throw new SuccessMessage([
                     'msg'=>'添加成功',
@@ -52,9 +77,9 @@ class Common{
                     'msg'=>'添加失败'
                 ]);
             };
+
         };
             
-
 
     }
 
@@ -63,24 +88,46 @@ class Common{
 
         
         
-        $scopeArr = ['order'=>5,];
-        if(isset($scope[$data['modelName']])){
-            $scope = $scope[$data['modelName']];
-            (new CommonValidate())->goCheck('one',$data);
-            $data = checkTokenAndScope($data,20);
-        };
+        $scopeArr = [
+            'Order'=>config('scope.three'),
+            'UserInfo'=>config('scope.two'),
+            'Product'=>[],
+            'Label'=>[],
+            'Sku'=>[],
+            'Article'=>[],
+            'Message'=>config('scope.three'),
+            'UserAddress'=>config('scope.two'),
+            'FlowLog'=>config('scope.two'),
+        ];
 
+        if(isset($scopeArr[$data['modelName']])){
+
+            if($scopeArr[$data['modelName']]['mustToken']){
+                $scope = $scopeArr[$data['modelName']];
+                (new CommonValidate())->goCheck('one',$data);
+                $data = checkTokenAndScope($data,$scope);
+            }else{
+                if(!isset($data['searchItem']['thirdapp_id'])){
+                    throw new ErrorMessage([
+                        'msg'=>'请传递关键参数'
+                    ]); 
+                }
+            };
+
+        }else{
+            
+            throw new ErrorMessage([
+                'msg'=>'接口调用错误'
+            ]); 
+            
+             
+        };
         
-        $data = preGet($data);
         
         $res =  CommonModel::CommonGet($data['modelName'],$data);
-        
-        return $res;
-        
+       
         if(isset($res['data'])&&count($res['data'])>0){
-
             $res['data'] = clist_to_tree($res['data']);
-
         }else if(!isset($res['data'])&&count($res)>0){
             $res = clist_to_tree($res);
         }else{
@@ -93,43 +140,47 @@ class Common{
         if($inner){
             return $res;
         }else{
-          
             throw new SuccessMessage([
                 'msg'=>'查询成功',
                 'info'=>$res
             ]);
-
         };
            
     }
 
     public static function update($data,$key='更新',$inner=false){
 
-        $data = preSearch($data);
-
-        $scopeArr = ['order'=>5,'label'=>20,'article'=>20,'product'=>20];
-        if(isset($scope[$data['modelName']])){
-            $scope = $scope[$data['modelName']];
-            (new CommonValidate())->goCheck('two',$data);
-            $data = checkTokenAndScope($data,$scope);
-        };
-
-        $revise = CommonModel::CommonGet($data['modelName'],$data['map']);
         
-        if($revise){
-            $revise = $revise[0];
-            $data['map']['thirdapp_id'] = $revise['thirdapp_id'];
-            $data['map']['user_no'] = $revise['user_no'];
-            $data = checkTokenAndScope($data,0);
+
+        $scopeArr = [
+            
+            'Order'=>config('scope.one'),
+            'Label'=>config('scope.one'),
+            'Article'=>config('scope.one'),
+            'Product'=>config('scope.one'),
+            'Sku'=>config('scope.one'),
+            'Message'=>config('scope.two'),
+            'UserInfo'=>config('scope.two'),
+            'UserAddress'=>config('scope.two'),
+            'FlowLog'=>config('scope.two'),
+
+        ];
+        if(isset($scopeArr[$data['modelName']])){
+            $scope = $scopeArr[$data['modelName']];
+            (new CommonValidate())->goCheck('one',$data);
+            $data = checkTokenAndScope($data,$scope);
         }else{
             throw new ErrorMessage([
-                'msg'=>'您所'.$key.'的信息不存在'
-            ]);
+                'msg'=>'接口调用错误'
+            ]); 
         };
-
         
-        $data = preUpdate($data);
-        $res =  CommonModel::CommonSave($data['modelName'],$data['data'],$data['map']);
+        
+        
+
+      
+        $res =  CommonModel::CommonSave($data['modelName'],$data);
+        //return $res;
         if($inner){
             return $res;
         }else{
@@ -140,17 +191,31 @@ class Common{
 
     public static function delete($data,$inner=false){
 
-        $scopeArr = ['order'=>5,'label'=>20,'article'=>20,'product'=>20];
-        if(isset($scope[$data['modelName']])){
-            $scope = $scope[$data['modelName']];
+        $scopeArr = [
+            'Order'=>config('scope.one'),
+            'Label'=>config('scope.one'),
+            'Article'=>config('scope.one'),
+            'Product'=>config('scope.one'),
+            'Sku'=>config('scope.one'),
+            'Message'=>config('scope.two'),
+            'UserInfo'=>config('scope.two'),
+            'UserAddress'=>config('scope.two'),
+            'FlowLog'=>config('scope.two'),
+        ];
+        if(isset($scopeArr[$data['modelName']])){
+            $scope = $scopeArr[$data['modelName']];
             (new CommonValidate())->goCheck('one',$data);
             checkTokenAndScope($data,$scope);
+        }else{
+            throw new ErrorMessage([
+                'msg'=>'接口调用错误'
+            ]); 
         };
 
         
         $data['data'] = [];
         $data['data']['status'] = -1;
-        
+        $data['FuncName'] = 'update';
 
         
         return self::update($data,"删除",$inner);
@@ -160,7 +225,14 @@ class Common{
     public static function realDelete($data,$key='真实删除',$inner=false){
         $data = preSearch($data);
 
-        $scopeArr = ['order'=>5,'label'=>20,'article'=>20,'product'=>20];
+        $scopeArr = [
+            'Order'=>['scope'=>[0,25],'behavior'=>['isMe']],
+            'Label'=>['scope'=>[25,90],'behavior'=>['canChild']],
+            'Article'=>['scope'=>[25,90],'behavior'=>['canChild']],
+            'Product'=>['scope'=>[25,90],'behavior'=>['canChild']],
+            'UserInfo'=>['scope'=>[0,20,90],'behavior'=>['isMe','canChild']],
+            'UserAddress'=>['scope'=>[0,20],'behavior'=>['isMe']]
+        ];
         if(isset($scope[$data['modelName']])){
             $scope = $scope[$data['modelName']];
             (new CommonValidate())->goCheck('one',$data);
@@ -173,6 +245,22 @@ class Common{
             return $res;
         }else{
             dealUpdateRes($res,$key); 
+        };
+        
+    }
+
+    public static function compute($data,$inner=false){
+       
+        
+        
+        $res =  CommonModel::CommonCompute($data);
+        if($inner){
+            return $res;
+        }else{
+            throw new SuccessMessage([
+                'msg'=>'计算成功',
+                'info'=>$res
+            ]);
         };
         
     }

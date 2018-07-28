@@ -36,10 +36,8 @@ class QiniuImage{
         self::$bucket = config('qiniu.BUCKET');
         self::$domain = config('qiniu.DOMAIN');
         $data = Request::instance()->param();
-        $arr = ['upload'];
-        if(in_array($data['serviceName'],$arr)){
-            checkToken();
-        };
+        
+        
         
     }
     
@@ -48,7 +46,7 @@ class QiniuImage{
         require_once APP_PATH . '/../vendor/qiniu/autoload.php';
 
         (new CommonValidate())->goCheck('one',$data);
-        checkTokenAndScope($data,20);
+        checkTokenAndScope($data,['scope'=>[20,90,110],'behavior'=>['isMe','All']]);
         
         $userinfo = Cache::get($data['token']);
         
@@ -74,7 +72,7 @@ class QiniuImage{
             ]);
         } else {
             //记录img表
-            $data = array(
+            $data['data'] = array(
                 "thirdapp_id" => $userinfo['thirdapp_id'],
                 "user_id" => $userinfo['id'],
                 "name"        => $ret['key'],
@@ -84,9 +82,11 @@ class QiniuImage{
                 "create_time" => time(),
                 "modelName" => 'image',
             );
+            $data['FuncName'] = 'add';
+            
 
 
-            $res = CommonService::add($data,true);
+            $res = CommonModel::CommonSave('Image',$data);
             
             if ($res>0) {
                 /*$admininfo = ThirdModel::getThirdUserInfo($userinfo['thirdapp_id']);
@@ -193,15 +193,7 @@ class QiniuImage{
     }
 
 
-    
 
-    
-
-
-    
-
-
-    
 
 
 }

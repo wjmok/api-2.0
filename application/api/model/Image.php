@@ -4,9 +4,9 @@ namespace app\api\model;
 
 
 use think\Model;
-use think\Loader;
 
-class Image extends BaseModel
+
+class Image extends Model
 {
 
     public static function dealAdd($data)
@@ -15,7 +15,7 @@ class Image extends BaseModel
         $standard = ['title'=>'','path'=>'','thirdapp_id'=>'','size'=>0,'create_time'=>time(),'type'=>1,'user_no'=>'','relation_table'=>'','relation'=>'','status'=>1,'relation_id'=>'','prefix'=>''];
         
         $data = chargeBlank($standard,$data);
-        if(isset($data['relation_table'])&&isset($data['relation_id'])){
+        /*if(isset($data['relation_table'])&&isset($data['relation_id'])){
             $model =Loader::model($data['relation_table']);
             $map['id'] = $data['relation_id'];
             $res = $model->where($map)->find();
@@ -24,7 +24,7 @@ class Image extends BaseModel
                     'msg' => '关联信息有误',
                 ]);
             }
-        };
+        };*/
         return $data;
         
     }

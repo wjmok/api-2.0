@@ -30,6 +30,13 @@ class BaseValidate extends Validate{
      */
     public function goCheck($scene,$data){
         //必须设置contetn-type:application/json
+        if(isset($data['data'])){
+            $data = array_merge($data,$data['data']);
+        };
+
+        if(isset($data['searchItem'])){
+            $data = array_merge($data,$data['searchItem']);
+        };
         
        
         if (!$this->scene($scene)->check($data)) {

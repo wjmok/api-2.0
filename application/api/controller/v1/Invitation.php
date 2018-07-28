@@ -18,9 +18,11 @@ use app\api\service\Invitation as InvitationService;
 use think\Request as Request;
 use think\Cache;
 
+
 /**
  * 后端帖子模块
  */
+
 class Invitation extends BaseController{
 
     protected $beforeActionList = [

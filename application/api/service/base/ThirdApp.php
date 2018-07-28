@@ -17,7 +17,7 @@ class ThirdApp{
 
     
 
-    private static $filterArr = ['mainImg','child_array','scope','custom_rule'];
+    
 
     function __construct($data){
         
@@ -27,16 +27,22 @@ class ThirdApp{
     
     public static function add($data,$inner=false){
 
-            (new CommonValidate())->goCheck('five',$data);
-            checkTokenAndScope($data,60);
+            (new CommonValidate())->goCheck('one',$data);
+            $data = checkTokenAndScope($data,config('scope.two'));
+            unset($data['searchItem']['thirdapp_id']);
+
+            
+            
 
             //判断用户名是否重复
             $modelData = [];
-            $modelData['searchItem']['name'] = $data['name'];
+            $modelData['searchItem'] = [];
+            $modelData['searchItem']['name'] = $data['data']['name'];
             $modelData['token'] = $data['token'];
-            $res = self::get($modelData,true);
-
-            if(!empty($res)){
+            $modelData = preGet($modelData);
+            $res =  CommonModel::CommonGet("ThirdApp",$modelData);
+            
+            if(!empty($res['data'])){
                 throw new ErrorMessage([
                     'msg' => '用户名重复',
                 ]);
@@ -45,32 +51,38 @@ class ThirdApp{
             
             $data = preAdd($data);
             unset($data['thirdapp_id']);
-            $data['parentid'] = Cache::get($data['token'])['thirdApp']['id'];
-            $data['child_array'] = json_encode([],true);
-            $MainRes =  CommonModel::CommonSave("ThirdApp",$data);
+            $data['data']['parentid'] = Cache::get($data['token'])['thirdApp']['id'];
+            $data['data']['child_array'] = json_encode([],true);
+            $data['data']['status'] = 1;
 
+            $MainRes =  CommonModel::CommonSave("ThirdApp",$data);
+            
             
 
             if($MainRes>0){
 
                 $modelData = [];
-                $modelData['child_array'] = Cache::get($data['token'])['thirdApp']['child_array'];
-                array_push($modelData['child_array'],intval($MainRes));
-                $modelData['id'] = Cache::get($data['token'])['thirdApp']['id'];
+                $modelData['data'] = [];
+                $modelData['data']['child_array'] = Cache::get($data['token'])['thirdApp']['child_array'];
+                array_push($modelData['data']['child_array'],intval($MainRes));
+                $modelData['searchItem']['id'] = Cache::get($data['token'])['thirdApp']['id'];
                 $modelData['token'] = $data['token'];
+                $modelData['FuncName'] = 'update';
                 
                 $res = self::update($modelData,'更新',true);
                 
                 if($res>0){
 
                     $modelData = [];
-                    $modelData['login_name'] = $data['name'];
-                    $modelData['password'] = '111111';
-                    $modelData['thirdapp_id'] = $MainRes;
+                    $modelData['data']['login_name'] = $data['data']['name'];
+                    $modelData['data']['password'] = '111111';
+                    $modelData['data']['thirdapp_id'] = $MainRes;
                     $modelData['token'] = $data['token'];
+                    $modelData['FuncName'] = 'add';
                     
                     
                     $res = UserService::add($modelData,true);
+
                     if($res>0){
                         throw new SuccessMessage([
                             'msg'=>'添加成功',
@@ -93,21 +105,21 @@ class ThirdApp{
                     'msg'=>'添加失败'
                 ]);
             };
-
     }
 
 
     public static function get($data,$inner=false){
 
         (new CommonValidate())->goCheck('one',$data);
-        checkTokenAndScope($data,60);
+        $data = checkTokenAndScope($data,config('scope.two'));
 
         $data = preGet($data);
-        unset($data['map']['thirdapp_id']);
+        unset($data['searchItem']['thirdapp_id']);
         
-
+        
         try{
             $res =  CommonModel::CommonGet("ThirdApp",$data);
+            
         }catch(Exception $e){
             throw new ErrorMessage([
                 'msg'=>'查询失败',
@@ -115,7 +127,18 @@ class ThirdApp{
             ]); 
         };
 
-        $res = resDeal($res,self::$filterArr);   
+        if(isset($res['data'])&&count($res['data'])>0){
+
+            $res['data'] = clist_to_tree($res['data']);
+
+        }else{
+            throw new SuccessMessage([
+                'msg'=>'查询结果为空',
+                'info'=>$res
+            ]);
+        };
+
+         
         if($inner){
             return $res;
         }else{
@@ -129,24 +152,11 @@ class ThirdApp{
 
     public static function update($data,$key='更新',$inner=false){
         
-        (new CommonValidate())->goCheck('two',$data);
-        checkTokenAndScope($data,60);
+        (new CommonValidate())->goCheck('one',$data);
 
-        $modelData = [];
-        $modelData['searchItem']['id'] = $data['id'];
-        $modelData['token'] = $data['token'];
-
-        $revise = self::get($modelData,true);
+        $data = checkTokenAndScope($data,config('scope.two'));
+        unset($data['searchItem']['thirdapp_id']);
         
-        if($revise){
-            $revise = $revise[0];
-            $revise['token'] = $data['token'];
-            checkTokenAndScope($revise,60);            
-        }else{
-            throw new ErrorMessage([
-                'msg'=>'您所'.$key.'的ID不存在'
-            ]);
-        };
 
         if($key=='更新'&&isset($data['name'])){
 
@@ -167,11 +177,10 @@ class ThirdApp{
 
 
 
-        $search = ['id'=>$data['id']];
-        unset($data['id']);
         $data = preUpdate($data);
+
+        $res =  CommonModel::CommonSave('ThirdApp',$data);
         
-        $res =  CommonModel::CommonSave("ThirdApp",$data,$search);  
         if($inner){
             return $res;
         }else{
@@ -181,13 +190,14 @@ class ThirdApp{
 
     public static function delete($data,$inner=false){
 
-        (new CommonValidate())->goCheck('two',$data);
-        checkTokenAndScope($data,70);
+        (new CommonValidate())->goCheck('one',$data);
+        $data = checkTokenAndScope($data,config('scope.two'));
         
         $modelData = [];
         $modelData['token'] = $data['token'];
-        $modelData['id'] = $data['id'];
-        $modelData['status'] = -1;
+        $modelData['searchItem']['id'] = $data['searchItem']['id'];
+        $modelData['data']['status'] = -1;
+        $modelData['FuncName'] = 'update';
         
         return self::update($modelData,"删除",$inner);
 
@@ -196,7 +206,7 @@ class ThirdApp{
     public static function realDelete($data,$key='真实删除',$inner=false){
 
         (new CommonValidate())->goCheck('one',$data);
-        checkTokenAndScope($data,80);
+        $data = checkTokenAndScope($data,config('scope.two'));
         
         $data = preSearch($data);
         $res =  CommonModel::CommonDelete("ThirdApp",$data);

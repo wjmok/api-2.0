@@ -5,6 +5,7 @@ namespace app\api\service;
 use app\api\model\User as UserModel;
 use app\api\model\ThirdApp as ThirdAppModel;
 use app\api\model\Common as CommonModel;
+use app\api\model\Distribution as DistributionModel;
 use app\api\service\DistributionMain as DistributionService;
 
 use app\lib\exception\TokenException;
@@ -41,7 +42,7 @@ class ProgrameToken {
     function __construct($data){
         //获取app_id，app_secret
         $modelData = [];
-        $modelData['map']['thirdapp_id'] = $data['thirdapp_id'];
+        $modelData['searchItem']['thirdapp_id'] = $data['thirdapp_id'];
         $ThirdAppInfo=CommonModel::get('thirdapp',$modelData);
         $this->code = $data['code'];
         $this->thirdapp_id = $data['thirdapp_id'];
@@ -56,6 +57,15 @@ class ProgrameToken {
         if (isset($data['headimgurl'])){
             $this->headimgurl = $data['headimgurl'];
         };
+        if(isset($data['parent_no'])){
+            $this->parent_no = $data['parent_no'];
+        };
+        $this->distribution_level = $data['distribution_level'];
+
+
+
+
+
     }
 
     /**
@@ -109,13 +119,13 @@ class ProgrameToken {
         $openid = $wxResult['openid'];
 
         $modelData = [];
-        $modelData['map']['openid'] = $data['openid'];
-        $modelData['map']['status'] = 1;
+        $modelData['searchItem']['openid'] = $data['openid'];
+        $modelData['searchItem']['status'] = 1;
         $user=CommonModel::CommonGet('user',$modelData);
 
         if(isset($wxResult['unionid'])){ 
             $modelData = [];
-            $modelData['map']['unionid'] = $wxResult['unionid'];
+            $modelData['searchItem']['unionid'] = $wxResult['unionid'];
             $unionUser=CommonModel::CommonGet('user',$modelData);
         };
 
@@ -125,8 +135,9 @@ class ProgrameToken {
             $modelData = [];
             $modelData['nickname'] = $this->nickname;
             $modelData['headimgurl'] = json_encode(["0"=>['name'=>'headimg','url'=>$this->headimgurl]]);
-            $search = ['id'=>$checkunionid['id']];
-            $uid = CommonModel::CommonSave('user',$modelData,$search);
+            $modelData['searchItem'] = ['id'=>$checkunionid['id']];
+            $modelData['FuncName'] = 'update';
+            $uid = CommonModel::CommonSave('user',$modelData);
 
         }else{
 
@@ -162,7 +173,7 @@ class ProgrameToken {
 
 
         $modelData = [];
-        $modelData['map']['id'] = $uid;
+        $modelData['searchItem']['id'] = $uid;
         $user=CommonModel::CommonGet('user',$modelData);
         $userNo=$user[0]['user_no'];
 
@@ -177,9 +188,20 @@ class ProgrameToken {
 
 
         $modelData = [];
-        $modelData['map']['user_no'] = $userNo;
+        $modelData['searchItem']['user_no'] = $userNo;
         $userInfo=CommonModel::CommonGet('user_info',$modelData);
 
+        if($this->distribution_level>0&&isset($this->parent_no)){
+            
+            $modelData = [];
+            $modelData['data']['level'] = 1;
+            $modelData['data']['parent_no'] = $this->parent_no;
+            $modelData['data']['child_no'] = $userNo;
+            $modelData['data']['thirdapp_id'] = $this->thirdapp_id;
+            $modelData['FuncName'] = 'add';
+            $uid = CommonModel::CommonSave('distribution',$modelData);
+
+        };
 
         throw new SuccessMessage([
             'msg'=>'登录成功',

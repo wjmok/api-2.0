@@ -2,17 +2,18 @@
 
 namespace app\api\model;
 
-
 use think\Model;
 
-class Label extends BaseModel
+
+class Distribution extends Model
 {
 
     public static function dealAdd($data)
     {   
-        $standard = ['title'=>'','description'=>'','parentid'=>'','listorder'=>'','type'=>'','bannerImg'=>[],'thirdapp_id'=>'','create_time'=>time(),'update_time'=>'','delete_time'=>'','status'=>1,'mainImg'=>[],'user_no'=>'','passage1'=>''];
+        $standard = ['level'=>'','origin_no'=>'','child_no'=>'','thirdapp_id'=>'','create_time'=>time(),'update_time'=>'','delete_time'=>'','status'=>1,'child_str'=>''];
 
         $data = chargeBlank($standard,$data);
+
         return $data;
         
     }

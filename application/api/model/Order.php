@@ -5,12 +5,13 @@ namespace app\api\model;
 
 use think\Model;
 use app\api\model\OrderItem;
+
 class Order extends BaseModel
 {
 
     public static function dealAdd($data)
     {   
-        $standard = ['order_no'=>'','pay'=>[],'price'=>'','snap_address'=>[],'express'=>[],'pay_status'=>'','product_type'=>'','prepay_id'=>'','wx_prepay_info'=>[],'order_step'=>0,'transport_status'=>0,'transaction_id'=>'','refund_no'=>'','isrefund'=>'','create_time'=>time(),'invalid_time'=>'','start_time'=>'','end_time'=>'','update_time'=>'','finish_time'=>'','delete_time'=>'','passage1'=>'','passage_array'=>[],'status'=>1,'thirdapp_id'=>1,'user_no'=>'',];
+        $standard = ['order_no'=>'','pay'=>[],'price'=>'','snap_address'=>[],'express'=>[],'pay_status'=>'','type'=>'','prepay_id'=>'','wx_prepay_info'=>[],'order_step'=>0,'transport_status'=>0,'transaction_id'=>'','refund_no'=>'','isrefund'=>'','create_time'=>time(),'invalid_time'=>'','start_time'=>'','end_time'=>'','update_time'=>'','finish_time'=>'','delete_time'=>'','passage1'=>'','passage_array'=>[],'status'=>1,'thirdapp_id'=>1,'user_no'=>''];
 
         $data = chargeBlank($standard,$data);
 
@@ -36,11 +37,11 @@ class Order extends BaseModel
     public static function dealUpdate($data)
     {   
 
-    	$res = (new Order())->where($data['map'])->select();
+    	$res = (new Order())->where($data['searchItem'])->select();
         foreach ($res as $key => $value) {
 
         	$relationRes = (new OrderItem())->save(
-        		['status'  => $data['map']['status']],
+        		['status'  => $data['searchItem']['status']],
 				['order_no' => $res[$key]['order_no']]
 			);
         };
@@ -50,7 +51,7 @@ class Order extends BaseModel
     public static function dealRealDelete($data)
     {   
 
-    	$res = (new Order())->where($data['map'])->select();
+    	$res = (new Order())->where($data['searchItem'])->select();
         foreach ($res as $key => $value) {
 			OrderItem::destroy(['order_no' => $res[$key]['order_no']]);
         };
