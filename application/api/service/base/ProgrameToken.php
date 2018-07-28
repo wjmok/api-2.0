@@ -16,8 +16,6 @@ use think\Model;
 
 
 
-
-
 /**
  * 微信登录
  * 如果担心频繁被恶意调用，请限制ip
@@ -192,7 +190,7 @@ class ProgrameToken {
         $userInfo=CommonModel::CommonGet('user_info',$modelData);
 
         if($this->distribution_level>0&&isset($this->parent_no)){
-            
+
             $modelData = [];
             $modelData['data']['level'] = 1;
             $modelData['data']['parent_no'] = $this->parent_no;
